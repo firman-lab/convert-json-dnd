@@ -4,21 +4,21 @@ import { TableRow } from './jsonParser';
 export function exportToExcel(data: TableRow[], filename: string = 'soal_export.xlsx') {
   try {
     // Prepare data for export
-    const exportData = data.map((row, index) => ({
-      'No': index + 1,
-      'Pertanyaan': row.pertanyaan,
-      'Opsi A': row.optionA,
-      'Opsi B': row.optionB,
-      'Opsi C': row.optionC,
-      'Opsi D': row.optionD,
-      'Opsi E': row.optionE,
-      'Jawaban Benar': row.correctAnswer,
-      'Score A': row.scoreA,
-      'Score B': row.scoreB,
-      'Score C': row.scoreC,
-      'Score D': row.scoreD,
-      'Score E': row.scoreE,
-      'Pembahasan': row.pembahasan,
+    const exportData = data.map((row) => ({
+      'category': row.kategori.toUpperCase(),
+      'question': row.pertanyaan,
+      'optionA': row.optionA,
+      'optionB': row.optionB,
+      'optionC': row.optionC,
+      'optionD': row.optionD,
+      'optionE': row.optionE,
+      'correctAnswer': row.correctAnswer,
+      'scoreA': row.scoreA,
+      'scoreB': row.scoreB,
+      'scoreC': row.scoreC,
+      'scoreD': row.scoreD,
+      'scoreE': row.scoreE,
+      'explanation': row.pembahasan,
     }));
 
     // Create a new workbook

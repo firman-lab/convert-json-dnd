@@ -31,6 +31,7 @@ export interface ParsedData {
 
 export interface TableRow {
   id: string;
+  kategori: string;
   pertanyaan: string;
   optionA: string;
   optionB: string;
@@ -57,6 +58,7 @@ export function parseJsonInput(jsonString: string): TableRow[] {
 
     return parsed.soal.map((soal, index) => ({
       id: `row-${soal.id || index}`,
+      kategori: soal.kategori,
       pertanyaan: soal.pertanyaan,
       optionA: soal.pilihan.a.text,
       optionB: soal.pilihan.b.text,
@@ -87,7 +89,10 @@ export function validateTableRow(row: TableRow): string[] {
     errors.push("Pertanyaan tidak boleh kosong");
   }
 
-  if (!row.correctAnswer || !["A", "B", "C", "D", "E"].includes(row.correctAnswer.toUpperCase())) {
+  if (
+    !row.correctAnswer ||
+    !["A", "B", "C", "D", "E"].includes(row.correctAnswer.toUpperCase())
+  ) {
     errors.push("Jawaban yang benar harus A, B, C, D, atau E");
   }
 
