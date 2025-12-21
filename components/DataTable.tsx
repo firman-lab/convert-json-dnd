@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { TableRow } from '@/lib/jsonParser';
+import { TableRow } from "@/lib/jsonParser";
 
 interface DataTableProps {
   data: TableRow[];
@@ -13,10 +13,25 @@ export default function DataTable({
   onRowEdit,
   onRowDelete,
 }: DataTableProps) {
-
   const truncateText = (text: string, maxLength: number = 60) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
+  };
+
+  const handleCopy = async (row: TableRow) => {
+    const formattedText = `${row.pertanyaan}
+A. ${row.optionA}
+B. ${row.optionB}
+C. ${row.optionC}
+D. ${row.optionD}
+E. ${row.optionE}`;
+
+    try {
+      await navigator.clipboard.writeText(formattedText);
+      // Optional: Show success feedback (you could add a toast notification here)
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   };
 
   return (
@@ -35,19 +50,53 @@ export default function DataTable({
                     {idx + 1}
                   </span>
                   <div>
-                    <h3 className="text-white font-semibold text-sm">Soal #{idx + 1}</h3>
+                    <h3 className="text-white font-semibold text-sm">
+                      Soal #{idx + 1}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      Jawaban: <span className="text-green-400 font-bold">{row.correctAnswer}</span>
+                      Jawaban:{" "}
+                      <span className="text-green-400 font-bold">
+                        {row.correctAnswer}
+                      </span>
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => handleCopy(row)}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-400 rounded-lg transition-all text-sm font-medium"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Copy
+                  </button>
+                  <button
                     onClick={() => onRowEdit(row)}
                     className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-400 rounded-lg transition-all text-sm font-medium"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                     Edit
                   </button>
@@ -55,8 +104,18 @@ export default function DataTable({
                     onClick={() => onRowDelete(row.id)}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 rounded-lg transition-all text-sm font-medium"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                     Hapus
                   </button>
@@ -65,32 +124,38 @@ export default function DataTable({
 
               {/* Pertanyaan */}
               <div className="mb-6">
-                <h4 className="text-xs font-semibold text-slate-400 mb-3">PERTANYAAN</h4>
-                <p className="text-white text-sm leading-relaxed">{row.pertanyaan}</p>
+                <h4 className="text-xs font-semibold text-slate-400 mb-3">
+                  PERTANYAAN
+                </h4>
+                <p className="text-white text-sm leading-relaxed">
+                  {row.pertanyaan}
+                </p>
               </div>
 
               {/* Options Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {['A', 'B', 'C', 'D', 'E'].map((opt) => {
+                {["A", "B", "C", "D", "E"].map((opt) => {
                   const optionKey = `option${opt}` as keyof TableRow;
                   const scoreKey = `score${opt}` as keyof TableRow;
                   const isCorrect = row.correctAnswer === opt;
-                  
+
                   return (
                     <div
                       key={opt}
                       className={`p-4 rounded-lg border ${
                         isCorrect
-                          ? 'bg-green-500/10 border-green-500/30'
-                          : 'bg-slate-900/50 border-slate-700'
+                          ? "bg-green-500/10 border-green-500/30"
+                          : "bg-slate-900/50 border-slate-700"
                       }`}
                     >
                       <div className="flex items-start gap-2 mb-2">
-                        <span className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold ${
-                          isCorrect
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-slate-700 text-slate-400'
-                        }`}>
+                        <span
+                          className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold ${
+                            isCorrect
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-slate-700 text-slate-400"
+                          }`}
+                        >
                           {opt}
                         </span>
                         <p className="text-slate-300 text-xs leading-relaxed flex-1">
@@ -99,7 +164,9 @@ export default function DataTable({
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Poin:</span>
-                        <span className="text-amber-400 font-semibold text-sm">{row[scoreKey]}</span>
+                        <span className="text-amber-400 font-semibold text-sm">
+                          {row[scoreKey]}
+                        </span>
                       </div>
                     </div>
                   );
@@ -109,7 +176,9 @@ export default function DataTable({
               {/* Pembahasan */}
               {row.pembahasan && (
                 <div className="pt-6 mt-2 border-t border-slate-700">
-                  <h4 className="text-xs font-semibold text-slate-400 mb-3">PEMBAHASAN</h4>
+                  <h4 className="text-xs font-semibold text-slate-400 mb-3">
+                    PEMBAHASAN
+                  </h4>
                   <p className="text-slate-300 text-sm leading-relaxed">
                     {truncateText(row.pembahasan, 150)}
                   </p>
