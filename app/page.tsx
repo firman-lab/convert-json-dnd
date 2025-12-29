@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { parseJsonInput, TableRow, validateTableRow } from '@/lib/jsonParser';
 import { exportToExcel } from '@/lib/excelExport';
+import { importFromExcel } from '@/lib/excelImport';
 import JsonInputSection from '@/components/JsonInputSection';
 import DataTable from '@/components/DataTable';
 import EditModal from '@/components/EditModal';
@@ -14,6 +15,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [editingRow, setEditingRow] = useState<TableRow | null>(null);
   const [showJsonInput, setShowJsonInput] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleJsonSubmit = useCallback((jsonString: string) => {
     setIsLoading(true);
@@ -79,6 +81,40 @@ export default function Home() {
     }
   }, [tableData]);
 
+  const handleImportExcel = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    importFromExcel(file)
+      .then((data) => {
+        setTableData(data);
+        setSuccessMessage(`Berhasil mengimport ${data.length} soal dari Excel`);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      })
+      .catch((err) => {
+        const errorMessage = err instanceof Error ? err.message : 'Error import';
+        setError(errorMessage);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
@@ -111,13 +147,22 @@ export default function Home() {
                     {showJsonInput ? 'Hide' : 'Show'} JSON
                   </button>
                   <button
+                    onClick={handleImportClick}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all shadow-lg shadow-blue-900/50 font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="hidden sm:inline">Import Excel</span>
+                  </button>
+                  <button
                     onClick={handleExportExcel}
                     className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg transition-all shadow-lg shadow-emerald-900/50 font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span className="hidden sm:inline">Export</span>
+                    <span className="hidden sm:inline">Export Excel</span>
                   </button>
                 </>
               )}
@@ -174,6 +219,15 @@ export default function Home() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleImportExcel}
+          className="hidden"
+        />
+
         {tableData.length === 0 ? (
           /* Initial State - Show JSON Input */
           <div className="max-w-2xl mx-auto">
@@ -184,9 +238,38 @@ export default function Home() {
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-white mb-2">Mulai Konversi</h2>
-              <p className="text-slate-400">Paste JSON soal Anda untuk memulai</p>
+              <p className="text-slate-400">Paste JSON atau import Excel untuk memulai</p>
             </div>
-            <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+
+            {/* Import Excel Button */}
+            <div className="mb-6">
+              <button
+                onClick={handleImportClick}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all shadow-lg shadow-blue-900/50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                {isLoading ? 'Memproses...' : 'Import dari Excel'}
+              </button>
+              <p className="text-center text-slate-500 text-sm mt-2">
+                File Excel harus sesuai format export aplikasi ini
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-slate-950 text-slate-400">atau paste JSON</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+            </div>
           </div>
         ) : (
           /* Data Loaded State */
