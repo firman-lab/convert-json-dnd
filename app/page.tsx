@@ -2,9 +2,11 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { parseJsonInput, TableRow, validateTableRow } from '@/lib/jsonParser';
+import { parseTextInput } from '@/lib/textParser';
 import { exportToExcel } from '@/lib/excelExport';
 import { importFromExcel } from '@/lib/excelImport';
 import JsonInputSection from '@/components/JsonInputSection';
+import TextInputSection from '@/components/TextInputSection';
 import DataTable from '@/components/DataTable';
 import EditModal from '@/components/EditModal';
 
@@ -15,6 +17,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [editingRow, setEditingRow] = useState<TableRow | null>(null);
   const [showJsonInput, setShowJsonInput] = useState(true);
+  const [inputMode, setInputMode] = useState<'json' | 'text'>('json');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleJsonSubmit = useCallback((jsonString: string) => {
@@ -31,6 +34,29 @@ export default function Home() {
 
       setTableData(parsedData);
       setSuccessMessage(`Berhasil memparse ${parsedData.length} soal`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error tidak diketahui';
+      setError(errorMessage);
+      setTableData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleTextSubmit = useCallback((textString: string) => {
+    setIsLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const parsedData = parseTextInput(textString);
+
+      if (parsedData.length === 0) {
+        throw new Error('Data soal tidak ditemukan dalam text');
+      }
+
+      setTableData(parsedData);
+      setSuccessMessage(`Berhasil memparse ${parsedData.length} soal dari text`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error tidak diketahui';
       setError(errorMessage);
@@ -238,7 +264,7 @@ export default function Home() {
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-white mb-2">Mulai Konversi</h2>
-              <p className="text-slate-400">Paste JSON atau import Excel untuk memulai</p>
+              <p className="text-slate-400">Paste JSON, Text, atau import Excel untuk memulai</p>
             </div>
 
             {/* Import Excel Button */}
@@ -258,17 +284,56 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="relative">
+            <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-slate-950 text-slate-400">atau paste JSON</span>
+                <span className="px-4 bg-slate-950 text-slate-400">atau input manual</span>
               </div>
             </div>
 
+            {/* Tab Switcher */}
+            <div className="flex gap-2 mb-6 p-1 bg-slate-800/50 rounded-lg">
+              <button
+                onClick={() => setInputMode('json')}
+                className={`flex-1 px-4 py-2.5 rounded-md transition-all font-medium ${
+                  inputMode === 'json'
+                    ? 'bg-cyan-600 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  JSON Format
+                </div>
+              </button>
+              <button
+                onClick={() => setInputMode('text')}
+                className={`flex-1 px-4 py-2.5 rounded-md transition-all font-medium ${
+                  inputMode === 'text'
+                    ? 'bg-amber-600 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Text Format
+                </div>
+              </button>
+            </div>
+
+            {/* Input Section */}
             <div className="mt-6">
-              <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+              {inputMode === 'json' ? (
+                <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+              ) : (
+                <TextInputSection onSubmit={handleTextSubmit} isLoading={isLoading} />
+              )}
             </div>
           </div>
         ) : (
@@ -345,8 +410,47 @@ export default function Home() {
 
             {/* JSON Input Toggle (when data exists) */}
             {showJsonInput && (
-              <div className="mt-6">
-                <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+              <div className="mt-6 space-y-6">
+                {/* Tab Switcher */}
+                <div className="flex gap-2 p-1 bg-slate-800/50 rounded-lg max-w-md">
+                  <button
+                    onClick={() => setInputMode('json')}
+                    className={`flex-1 px-4 py-2.5 rounded-md transition-all font-medium text-sm ${
+                      inputMode === 'json'
+                        ? 'bg-cyan-600 text-white shadow-lg'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      JSON
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setInputMode('text')}
+                    className={`flex-1 px-4 py-2.5 rounded-md transition-all font-medium text-sm ${
+                      inputMode === 'text'
+                        ? 'bg-amber-600 text-white shadow-lg'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Text
+                    </div>
+                  </button>
+                </div>
+
+                {/* Input Area */}
+                {inputMode === 'json' ? (
+                  <JsonInputSection onSubmit={handleJsonSubmit} isLoading={isLoading} />
+                ) : (
+                  <TextInputSection onSubmit={handleTextSubmit} isLoading={isLoading} />
+                )}
               </div>
             )}
           </div>
